@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<title>HTTPS - hva det er, hvorfor det trengs og hvordan det settes opp</title>
+		<script src="js/html-table-of-contents.js"
+					type="text/javascript">
+</script>
+		<link rel="stylesheet" type="text/css" href="css/html-table-of-contents.css" />
+</head>
+<body onload="htmlTableOfContents();">
+<h1>HTTPS - hva det er, hvorfor det trengs og hvordan det settes opp</h1>
+<p>
+		<b>Contents</b>
+</p>
+
+<div id="toc">
+</div>
+<h2>Introduksjon</h2>
+
+<p>All kommunikasjon som blir sendt over vanlig HTTP protokoll er klartekst og åpent for en rekke ulike angrep, typisk “man in the middle” angrep. Dette kan for eksempel være eavesdropping, der en angriper lytter til informasjon som blir sendt mellom klient og tjener, eller tampering som vil si at en angriper lytter til og endrer data som blir sendt mellom klient og tjener uten at noen av partene oppdager at informasjon har blitt endret underveis.</p>
+
+<p>HTTPS kan bidra til å forhindre slike angrep ved å kryptere all informasjon som blir sendt mellom server og klient. En vanlig feiltagelse er at det bare er websider som behandler sensitiv informasjon som behøver å benytte seg av HTTPS. Men hver eneste ubeskyttede HTTP forespørsel kan potensielt avsløre informasjon om atferd og identitet til en bruker. Selv om en enkelt forespørsel kan virke uskyldig, kan en angriper aggregere data av slike enkelt forespørsler til å avsløre identiteter og benytte seg av inferens rundt brukerens adferd for å tilegne seg sensitive opplysninger.</p>
+
+<h2>Hva er HTTPS?</h2>
+
+<p>HTTPS er en protokoll for sikker kommunikasjon over et nettverk, og er i utstrakt bruk i dag. HTTPS, også kalt HTTP over TLS, HTTP over SSL eller HTTP Secure, refererer i praksis til bruk av HTTP protokollen over SSL eller TLS. Resultatet er at all HTTP trafikk, inkludert url, tjener respons, cookies, media og alt annet som blir sendt over HTTP, er kryptert. En angriper som lytter til samtalen kan hverken lese eller endre informasjonen som blir sendt. I tillegg kan både klient og tjener verifisere hvem som er i den andre enden.</p>
+
+<h3>SSL/TLS</h3>
+
+<p>Transport Layer Security (TLS) og dens forgjenger, Secure Sockets Layer (SSL), er kryptografiske protokoller for sikker kommunikasjon over et nettverk. Det er noen små forskjeller mellom de nyeste versjonene av TLS (1.0) og SSL (3.0) men de fleste klienter støtter begge versjonene. TLS har noen forbedringer og forenklinger i forhold til SSL, og er den foretrukne protokollen per i dag.</p>
+
+<p>Både TLS og SSL benytter seg av såkalt asymmetrisk Public Key Infrastruktur (PKI). En slik infrastruktur bruker to ulike nøkler for å kryptere informasjon, en offentlig nøkkel som kan deles med andre og en privat nøkkel som beholdes av eieren. Alt som krypteres med den offentlige nøkkelen kan bare dekrypteres av den private nøkkelen, og vice versa. Som navnet tilsier skal den private nøkkelen holdes privat, og bare benyttes av eieren av nøkkelen. På for eksempel en webside vil nøkkelen bli holdt beskyttet på webserveren. Den offentlige nøkkelen kan deles og distribueres til alle som har behov for å dekryptere informasjon som har blitt kryptert med den private nøkkelen, dvs. alle klienter som sender forespørsler til serveren.</p>
+
+<h3>Sertifikat og “Certificate Authorities” (CA)</h3>
+
+<p>For å kunne opprette en SSL tilkobling må webserveren har et SSL sertifikat. For å få et sertifikat, må man opprette et Certificate Signing Request (CSR) på webserveren. Dette oppretter også en privat og en offentlig nøkkel på serveren. Denne CSR filen må så sendes til en SSL Certificate tilbyder, også kalt Certificate Authority (CA). CA genererer så et SSL sertifikat basert på informasjonen i CSR, som også inneholder den offentlige nøkkelen. CA får aldri tilgang til den private nøkkelen. Når en har mottatt SSL sertifikatet kan dette installeres på serveren. En må også installere et annet sertifikat som verifiserer kredibiliteten av SSL sertifikatet ved å knytte det opp mot ens CA sitt egen sertifikat. Dette SSL sertifikatet kan så brukes til å opprette en HTTPS tilkobling.</p>
+
+<p>Når en forespør en HTTPS tilkobling til en webside, vil websiden først sende et SSL sertifikat tilbake til klienten. Dette sertifikatet inneholder den offentlige nøkkelen som klienten kan bruke til å sende kryptert informasjon til serveren. Basert på dette sertifikatet kan klient og tjener utføre et såkalt SSL Handshake som involverer generering av unike delte nøkler, og disse kan videre brukes for å sikre kommunikasjon mellom klient og tjener. </p>
+
+<h2>I praksis:</h2>
+
+<h3>Generell setup</h3>
+
+<p><strong>Fremtving bruk av HTTPS</strong></p>
+
+<p>Noen nettsteder kjøper et SSL sertifikat, konfigurer det på serveren deres og trur de er ferdige. Det de egentlig har gjort er å aktivere mulighetene til HTTPS - noe som brukere vil mest sansynlig ikke legge merke til. Alle HTTP forespørsler burde omdirigeres til HTTPS for å sørge for at alle brukere nyter av nettstedenes HTTPS støtte. Det betyr at alle som besøker nettsidene vil automatisk bytte om til HTTPS og ha sikker trafikk fra dette punktet fremover.</p>
+
+<p>Likevel må en ting nevnes her. Brukere vil bruke vanlig HTTP første gangen de sender et forespørsel til et av nettsidene og det er fult mulig at de sender fortrolig informasjon allerede da. I tillegg forblir det en liten sjanse for en “man-in-the-middle” angrep.</p>
+
+<p><strong>Streng transport sikkerhet</strong></p>
+
+<p>For videre stramming, aktiver HTTP “strict transport security” (HSTS). Dette er en spesiell header som kan sendes av serveren. Nå indikerer serveren at du ikke må aksessere denne websiden, via vanlig HTTP eller via HTTPS dersom sertifikatet er dodgy/upålitelig, for en definert tidsperoide. Subdomener kan også inkluderes. HSTS gjør at SSL stripping (nettsidens nedgradering fra HTTPS til HTTP) blir veldig vanskelig for angripere.</p>
+
+<p>Alt dette gjøres med hjelp av en simpel server header som er triviell å konfigurere. Vær oppmerksom på at det finnes ingen mulighet å tilbakestill denne innstillingen før max-alderen er overskrid (1 ikke-skuddår). Så behold det i bakhode før du aktiverer denne funksjonen. Husk at HSTS brukes ved siden av HTTPS omdirigeringer og ikke i stedet for dem.</p>
+
+<p><strong>Sikre cookies</strong></p>
+
+<p>Cookies, til og med session cookies, har en valgfri flagg som heter “secure”. Cookien som har den satt på vil aldri ble sendt over en vanlig HTTP. Resultatet er at cookiesene ikke vil bli sendt med HTTP forespørselen browserene initialt starter med. Dermed er eavesdropping ikke lenger en fare.</p>
+
+<p><br/><strong>OpenSSL sårbarheter</strong>Hvis du kjører OpenSSL 1.0.1, forsikre deg om at du kjører OpenSSL 1.0.1g, nyere eller at din leverandørens OpenSSL har blitt patched for heartbleed bugen. Bugen er en utrolig alvorlig bug. En nettside som kjører HTTPS med et sårbar OpenSSL senker sikkerheten sin dramatisk. Dette må verifiseres før SSL aktiveres siden et system med dette sikkerhetsproblemet utsetter alle data som passerer serveren for et stort risiko.</p>
+
+<p>Det finnes andre viktige sårbarheter som OpenSSL CCS injection vulnerability (muliggjør man-in-the-middle angrep mot krypterte forbindelser (CVE-2014-0224)). Derfor må det alltid verifiseres at ens OpenSSL er oppdatert.</p>
+
+<p><strong>Chiffrer</strong></p>
+
+<p>Det finnes mange gamle chiffrer for SSL som en burde deaktivere. Standard konfigurasjoner er ofte ikke godt nok. Med gode chiffrer kan man tilbyr framover hemmeligholdelse (forward secrecy). Blir ens private SSL nøkkel kompromittert på et senere tidspunkt kan traffikk, som tidligere har blitt mottatt av en tredje, ikke dekrypteres.</p>
+
+<p>Konfigurering av chiffrer med framover hemmeligholdelse og kompatibilitet for eldre browsers er ikke triviell. Heldigvis finnes tjenester som <a href="https://www.ssllabs.com/ssltest/">Qualsys Labs SSL server test</a> som finner ut om noen av de aktiverte chiffrene er usikkre og hvilken chiffrer vil brukes av de store nettleserene.</p>
+
+<h3>Hvordan komme igang med <em>Let’ s Encrypt</em></h3>
+
+<h4>Introduksjon</h4>
+
+<p>Denne guid-en vil vise deg hvordan å sette opp et TLS/SSL sertifikat fra <em>Let’s Encrypt</em> på <em>Ubuntu</em> som kjører en <em>Apache</em> web-server.</p>
+
+<p>Guiden går ut ifra at du har fått satt opp serveren med ett gyldig domene.</p>
+
+<p>I denne guiden er det brukt <em>Ubuntu 16.04.1 LTS</em> sammen med <em>Apache</em>, men det skal være forholdsvis enkelt å tilpasse andre konfigurasjoner.</p>
+
+<h4>Hva som trengs</h4>
+
+<p>Server med:</p>
+
+<ul>
+	<li>Ett domene</li>
+	<li>Ubuntu 16.04.1 LTS</li>
+	<li>Apache</li>
+</ul>
+
+<h4>Steg 1 - Last ned Let’s Encrypt klient</h4>
+
+<figure><img src="Screen%20Shot%202016-11-17%20at%2018.50.36.png"/></figure>
+
+<p>Vi kan laste ned <em>Let’s Encrypt</em> sin ACME klient <em>Certbot</em> til /usr/local/sbin ved å&nbsp;skrive:</p>
+
+<p><code>$ cd /usr/local/sbin</code></p>
+
+<p><code>$ sudo wget https://dl.eff.org/certbot-auto</code></p>
+
+<p>Gjør deretter skriptet kjørbart ved å skrive:</p>
+
+<p><code>$ sudo chmod a+x /usr/local/sbin/certbot-auto</code></p>
+
+<p><em>Certbot-auto</em> klienten skal nå være klar til bruk.</p>
+
+<h4>Steg 2 - Sette opp SSL Sertifikat</h4>
+
+<p>Å generere et SSL-Sertifikat for <em>Apache</em> ved hjelp av <em>Certbot</em> er ganske enkelt. Klienten vil automatisk spørre etter og installere et nytt SSL sertifikat som er gyldig for det domene man legger til som parameter:</p>
+
+<p><code>$ certbot-auto --apache -d eksempel.no</code></p>
+
+<p>Certbot vil nå gjøre klart til installasjon av sertifikatet. NB. Bytt ut eksempel.no til ditt domene. ;)</p>
+
+<blockquote>
+<p>Certbot bruker python under installasjon så du må huske å ha satt ‘local variables’ til noe fornuftig.</p>
+
+<p>Eksempelvis kan dette gjøres slik:</p>
+
+<p><code>export LC_ALL=&quot;en_US.UTF-8&quot;</code></p>
+
+<p><code> export LC_CTYPE=&quot;en_US.UTF-8</code></p>
+
+<p>Det er også støtte for å installere et sertifikat som er gyldig for flere domener eller underdomener ved å legge dem til som parameter:</p>
+
+<p><code>$ certbot-auto --apache -d eksempel.no -d www.eksempel.no</code></p>
+</blockquote>
+
+<p>Klienten vil nå stille deg noen spørsmål som brukes til å konfigurere sertifikatet. Blant annet får du spørsmål om du vil tillate http tilkoblinger.</p>
+
+<figure><img src="Screen%20Shot%202016-11-18%20at%2011.53.13.png"/></figure>
+
+<p>Etter at installasjonen er fullført, kan du finne det genererte sertifikatet i mappe <code>/etc/letsencrypt/live</code></p>
+
+<figure><img src="Screen%20Shot%202016-11-18%20at%2011.54.57.png"/></figure>
+
+<p>Du skal nå ha tilgang til din nettside via HTTPS.</p>
+
+<figure><img src="Screen%20Shot%202016-11-18%20at%2012.01.29.png"/></figure>
+
+<p>For å sjekke om alt er blitt gjort riktig kan du sslLabs sin SSL Server Test:</p>
+
+<p><a href="https://www.ssllabs.com/ssltest/analyze.html">https://www.ssllabs.com/ssltest/analyze.html</a></p>
+
+<h4>Steg 3 - Sette opp automatisk fornyelse av Sertifikat</h4>
+
+<p>For å fornye dine sertifikater kan du kjøre:</p>
+
+<p><code>$ certbot-auto renew</code></p>
+
+<p>Denne kommandoen kan settes opp til å kjøre hver dag som en <em>CRON-Job</em></p>
+
+<p>Åpne <em>Cron</em>-configurasjonsfilen ved å skrive:</p>
+
+<p><code>$ sudo crontab -e</code></p>
+
+<p>Legg til denne linjen:</p>
+
+<p><code>30 2 * * 1 /usr/local/sbin/certbot-auto renew &gt;&gt; /var/log/le-renew.log</code></p>
+
+<p>Lagre og lukk filen. Du har nå lagt til en <em>cron</em>-jobb som vil kjøre kommandoen <code>certbot-auto renew</code> hver Mandag klokken 02:30 og loggføre det i <code>/var/log/le-renew.log</code>.</p>
+
+<h4>Enkelhet/vanskelighetsgrad</h4>
+
+<p>Å sette opp Sertifikat fra Let’s Encrypt med deres ACME-klient var enkelt og rett frem. Tar ca. et kvarter fra start til slutt. Ulike server oppsett og arkitektur for nettsiden kan gi nye utfordringer som ikke er nevnt i denne guid-en. (Se pros &amp; cons i konklusjonen under)</p>
+
+<h2>Konklusjon</h2>
+
+<h3>Pros og Cons</h3>
+
+<p>Pros</p>
+
+<p>Sikkerhet: HTTPS beskytter brukerens data mot man-in-the-middle attacks.</p>
+
+<p>Industri standard: HTTPS er et must have for alle online bedrifter som håndterer kortholder informasjon for å imøtekomme PCI DSSen (Payment Card Industry Data Security Standard).</p>
+
+<p>Tillit: Økt informasjonsformiddling om online sikkerhet vil føre til at brukere stoler mer på nettsider med https hengelås iconet i addressefeltet.</p>
+
+<p>Google Ranking: Google søk prefererer websider med HTTPS. Dette påvirket bare 1% av alle søk i August 2014 men tallet vil øke i årene som kommer.</p>
+
+<p>Les mer om hvilke tanker Google har for fremtidens nettsider her: <a href="https://security.googleblog.com/2016/09/moving-towards-more-secure-web.html">https://security.googleblog.com/2016/09/moving-towards-more-secure-web.html</a></p>
+
+<p>Cons</p>
+
+<p>Ekstra kostnader: Man må kjøpe og installere et SSL sertifikat for å kovertere nettsiden sin til HTTPS. I tillegg til det må SSL sertifikater fornyes og trenger vedlikehold.</p>
+
+<p>Saktne siden: Kryptering og dekryptering av informasjon betyr mer arbeid for servere og kan i noen tilfeller gjøre nettsiden tregere.</p>
+
+<p>Duplisert innhold: Alle HTTP nettsider må omdirigeres til HTTPS. Alle absolute interne lenker må redigeres nå til enten HTTPS URLer eller relative URLer.</p>
+
+<p>Crawling og indexering: Man må passe på å ikke blokke HTTPS siden sin fra crawling (indeksering av WWW) ved hjelp av web crawlers. Det samme gjelder for søkemotorer. Nød å ungå Nonindex meta-taggen.</p>
+
+<p>Tape Sosiale Signaler: Nettsiden vil tape flestparten av sine sosiale signaler (antall mennesker som liker og deler nettsiden på facebook, antall followers på twitter og tweets som nevner merken og inneholder lenken til nettsiden, ...).</p>
+
+</body>
+</html>
